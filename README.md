@@ -1,4 +1,4 @@
-# ReciclApp
+# PrintScan
 
 Cuenta impresoras, las guarda en un inventario de este navegador. Las fotos no salen del dispositivo.
 
