@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#050806">
+    <meta name="description" content="ReciclApp. La webcam del servidor marca botellas y el mapa busca basureros cerca.">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='marca/logo.svg') }}">
+    <title>{{ titulo }}</title>
+    <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tablero.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/flask.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="tablero">
+    <header class="hud">
+        <a href="/" class="marca focus-ring" aria-label="ReciclApp, inicio">
+            <img src="{{ url_for('static', filename='marca/icono.png') }}" alt="" width="42" height="42">
+            <span>ReciclApp<small>webcam</small></span>
+        </a>
+        <nav class="nav" aria-label="Navegación principal">
+            <a href="#clasificador" class="focus-ring"><i class="bx bx-camera" aria-hidden="true"></i>Cámara</a>
+            <a href="#mapa-basureros" class="focus-ring"><i class="bx bx-map" aria-hidden="true"></i>Mapa</a>
+            <a href="/juego/" class="focus-ring"><i class="bx bx-joystick" aria-hidden="true"></i>Inventario</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="ancho hero">
+            <div>
+                <p class="pista"><i class="bx bx-recycle" aria-hidden="true"></i> En el servidor</p>
+                <h1>La webcam marca la <span>botella</span></h1>
+                <p>Flask dibuja la caja con el cascade. El inventario y la foto del navegador están en la otra página.</p>
+                <a href="/juego/" class="boton boton-papel focus-ring"><i class="bx bx-play" aria-hidden="true"></i>Abrir el inventario</a>
+            </div>
+            <img class="hero-arte" src="{{ url_for('static', filename='marca/botellas.svg') }}" alt="Botella frente a tres basureros de reciclaje" width="640" height="360">
+        </section>
+
+        <section id="clasificador" class="zona">
+            <div class="ancho">
+                <div class="titulo-zona">
+                    <p class="etiqueta">Cámara</p>
+                    <h2>Lo que ve el servidor</h2>
+                    <p>La caja verde sale de <strong>botella.xml</strong>. Si no hay webcam, esta zona se queda en negro.</p>
+                </div>
+                <div class="panel">
+                    <div class="escenario">
+                        <img class="camara-flask" src="{{ url_for('video_feed') }}" alt="Webcam con las botellas marcadas">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="mapa-basureros" class="ancho mapa-zona">
+            <p class="etiqueta">Cerca de ti</p>
+            <h2>Busca un basurero</h2>
+            <p>Lima es un basurero, verde un contenedor y menta un punto de reciclaje.</p>
+            <div class="buscar">
+                <button id="buscar-basureros" type="button" class="boton boton-azul focus-ring"><i class="bx bx-current-location" aria-hidden="true"></i>Mi ubicación</button>
+                <input id="lugar-basureros" type="search" placeholder="Ciudad o dirección" aria-label="Ciudad o dirección">
+                <button id="buscar-lugar" type="button" class="boton boton-papel focus-ring"><i class="bx bx-search" aria-hidden="true"></i>Buscar</button>
+            </div>
+            <p id="mapa-estado">Todavía no hay una búsqueda.</p>
+            <ul class="leyenda" aria-label="Tipos de basurero">
+                <li><i class="bin bin-papel" aria-hidden="true"></i>Basurero</li>
+                <li><i class="bin bin-vidrio" aria-hidden="true"></i>Contenedor</li>
+                <li><i class="bin bin-plastico" aria-hidden="true"></i>Reciclaje</li>
+            </ul>
+            <div id="mapa" role="region" aria-label="Mapa de basureros"></div>
+            <ul id="mapa-lista" aria-label="Lugares encontrados"></ul>
+        </section>
+    </main>
+
+    <footer class="pie safe-bottom">
+        <p><strong>ReciclApp</strong></p>
+        <p>Docente: Jesús Bautista · Alumno: Luishiño Pericena</p>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{{ url_for('static', filename='js/mapa.js') }}"></script>
+</body>
+</html>

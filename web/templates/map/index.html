@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Reciclapp.">
+    <meta name="author" content="Reciclapp">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=no">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='imag/icono.png') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
+    <script src="https://kit.fontawesome.com/a4b5036150.js" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+         <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBeEsCbkqHxi0EwxEmkeqwOR1_P8qivMxI&callback=initMap&v=weekly&channel=2"
+        async></script>
+    <title>{{titulo}}</title>
+</head>
+<body>
+    <!--Menu de Navegación-->
+  <header>
+        <div class="header-content">
+            <div class="logo">
+                <h1><i class="fab fa-phoenix-framework"></i></h1>
+            </div>
+ 
+            <div class="menu" id="show-menu">
+                <nav>
+                    <ul>
+                        <li class="menu-selected">
+                            <a href="index.html" class="text-menu-selected">
+                                <i class="fas fa-home"></i>
+                            <img class="circular-avatar" src="{{ url_for('static', filename='imag/icono.png') }}" alt="Avatar">
+                            <p>Luishiño Pericena </p>
+                            <img src="{{ url_for('static', filename='imag/icono.png') }}" width="5" height="5" alt="moneda">
+                       </a>
+                        </li>
+                        <br>
+                        <li><a href="{{ url_for('perfil')}}"><i class="fas fa-book"></i>Mi Perfil</a></li>
+                        <li><a href="{{ url_for('map')}}"><i class="fas fa-layer-group"></i>Recompensa</a></li>
+                        <li><a href="#"><i class="fab fa-github"></i>Cuenta</a></li>    
+                        <li><a href="#"><i class="fas fa-address-book"></i>Configuración</a></li>
+                    </ul>
+                </nav>
+            </div>
+
+
+            
+        </div>
+        <div id="icon-menu">
+            <i class="fas fa-bars"></i>
+        </div>
+    </header>
+    <!--Portada Principal-->
+
+
+
+    <div class="container-all" id="move-content">
+
+
+    </div>
+
+
+
+
+
+
+
+    <div class="container-footer">
+        <footer>
+            <div class="logo-footer">
+            </div>
+            <div class="redes-footer">
+                <a href="s"><i
+                            class="fab fa-facebook icon-redes-footer"></i></a>
+                <a href="#"><i class="fab fa-telegram icon-redes-footer"></i></a>
+                <a href="#"><i class="fab fa-paypal icon-redes-footer"></i></a>
+            </div>
+            <hr>
+            <h4>HACKS © 2021</h4>
+        </footer>
+    </div>
+    </div>
+
+</body>
+
+</html>

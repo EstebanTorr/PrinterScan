@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Reciclapp.">
+    <meta name="author" content="Reciclapp">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=no">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='imag/icono.png') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
+    <script src="https://kit.fontawesome.com/a4b5036150.js" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+         <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBeEsCbkqHxi0EwxEmkeqwOR1_P8qivMxI&callback=initMap&v=weekly&channel=2"
+        async></script>
+    <title>{{titulo}}</title>
+</head>
+
+<body>
+    <!--Menu de Navegación-->
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <h1><i class="fab fa-phoenix-framework"></i></h1>
+            </div>
+ 
+            <div class="menu" id="show-menu">
+                <nav>
+                    <ul>
+                        <li class="menu-selected">
+                            <a href="#" class="text-menu-selected">
+                                <i class="fas fa-home"></i>
+                            <img class="circular-avatar" src="{{ url_for('static', filename='imag/icono.png') }}" alt="Avatar">
+                            <p>Luishiño Pericena </p>
+                            <img src="{{ url_for('static', filename='imag/icono.png') }}" width="5" height="5" alt="moneda">
+                    </a>
+                        </li>
+                        <br>
+                        <li><a href="{{ url_for('perfil')}}"><i class="fas fa-book"></i>Mi Perfil</a></li>
+                        <li><a href="{{ url_for('map')}}"><i class="fas fa-layer-group"></i>Recompensa</a></li>
+                        <li><a href="#"><i class="fab fa-github"></i>Cuenta</a></li>    
+                        <li><a href="#"><i class="fas fa-address-book"></i>Configuración</a></li>
+                    </ul>
+                </nav>
+            </div>
+
+
+            
+        </div>
+        <div id="icon-menu">
+            <i class="fas fa-bars"></i>
+        </div>
+    </header>
+    <!--Portada Principal-->
+
+
+
+    <div class="container-all" id="move-content">
+        <h1>Puntos de reciclaje  </h1>
+        <p>
+            dato informacion
+        </p>
+    </div>
+
+
+    <div id="map">
+    </div>
+   <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBeEsCbkqHxi0EwxEmkeqwOR1_P8qivMxI&callback=initMap&v=weekly&channel=2"
+        async></script>
+
+
+    <div class="container-footer">
+            <df-messenger class="bots" intent="WELCOME" chat-title="bots" agent-id="86938b5f-1e37-43dc-9f38-1bd5322b1eb7" language-code="es">
+    </df-messenger>
+        <footer>
+            <div class="logo-footer">
+            </div>
+            <div class="redes-footer">
+                <a href="s"><i
+                            class="fab fa-facebook icon-redes-footer"></i></a>
+                <a href="#"><i class="fab fa-telegram icon-redes-footer"></i></a>
+                <a href="#"><i class="fab fa-paypal icon-redes-footer"></i></a>
+            </div>
+            <hr>
+            <h4>Reciclapp © 2022</h4>
+        </footer>
+    </div>
+    </div>
+
+</body>
+
+</html>
+
+
+<script>
+    function initMap() {
+        const marcador = {
+            lat: 19.373341,
+            lng: 78.662109,
+        };
+        const image = {
+            url: "{{ url_for('static', filename='imag/basurero1.png') }}",
+            size: new google.maps.Size(71, 71),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(50, 50),
+            scaledSize: new google.maps.Size(100, 100)
+        };
+        const map = new google.maps.Map(document.getElementById("map"), {
+            zoom: 14,
+            center: marcador,
+        });
+        const marker = new google.maps.Marker({
+            position: marcador,
+            map: map,
+            icon: image,
+            title: 'basurero',
+        });
+    }
+</script>
+
+<style>
+    /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+    #map {
+        overflow: hidden;
+        padding-bottom: 56.25%;
+        position: relative;
+        height: 500px;
+        margin: 10px;
+        padding: 0px;
+        /*background: #ffca66;*/
+        /*border: solid #000;*/
+        border-top-width: 1px;
+        border-left-width: 2px;
+    }
+    /* Optional: Makes the sample page fill the window. */
+    html,
+    body {
+        /*background: #ffca66;*/
+        height: 0;
+        margin: 0;
+        padding: 0;
+    }
+</style>
