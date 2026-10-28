@@ -1,0 +1,1269 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description"
+    content="Identifica y cuenta impresoras con IA local. Usa la cámara o sube una foto. La imagen no sale del dispositivo.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="PrinterScan IA — Identificador de impresoras">
+  <meta property="og:description"
+    content="Detecta y registra impresoras de oficina con inteligencia artificial directamente en tu dispositivo.">
+  <meta property="og:image" content="assets/printer.jpg">
+  <link rel="icon" type="image/png" href="assets/icono.png">
+  <meta name="author" content="Luishiño Pericena">
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>PrinterScan IA — Identificador de impresoras</title>
+  <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+    rel="stylesheet">
+</head>
+
+<body class="tablero">
+  <header class="hud">
+    <a href="#" class="marca focus-ring" aria-label="PrinterScan IA, inicio">
+      <i class="bx bx-printer marca-icon" aria-hidden="true"></i>
+      <span>PrinterScan<small>IA · identificador</small></span>
+    </a>
+    <nav class="nav" aria-label="Navegación principal">
+      <a href="#clasificador" class="focus-ring"><i class="bx bx-camera" aria-hidden="true"></i>Escanear</a>
+      <a href="#mapa-basureros" class="focus-ring"><i class="bx bx-map" aria-hidden="true"></i>Mapa</a>
+      <a href="#como-funciona" class="focus-ring cuaderno"><i class="bx bx-info-circle" aria-hidden="true"></i>Cómo
+        funciona</a>
+      <button id="install-app" type="button" class="boton boton-chico hidden"><i class="bx bx-download"
+          aria-hidden="true"></i><span class="solo-ancho">Instalar</span></button>
+      <p class="marcador" aria-label="Impresoras acumuladas"><i class="bx bx-printer" aria-hidden="true"></i><strong
+          id="marcador-total">0</strong></p>
+    </nav>
+  </header>
+
+  <main>
+    <section class="ancho hero">
+      <div>
+        <p class="pista"><i class="bx bx-chip" aria-hidden="true"></i> IA en tu dispositivo</p>
+        <h1>Identifica la <span>impresora</span> y súmala al inventario</h1>
+        <p>Cámara, foto o video. Si salen dos, entran las dos. La misma no se cuenta otra vez.</p>
+        <a href="#clasificador" class="boton boton-papel focus-ring"><i class="bx bx-scan"
+            aria-hidden="true"></i>Empezar escaneo</a>
+      </div>
+      <img class="hero-arte" src="assets/printer.jpg" alt="Impresora de oficina detectada por IA" width="640"
+        height="360">
+    </section>
+
+    <section id="clasificador" class="zona">
+      <div class="ancho">
+        <div class="titulo-zona">
+          <p class="etiqueta">Detección en tiempo real</p>
+          <h2>¿Cuántas impresoras detectamos?</h2>
+          <p>La cámara y el video cuentan solos. Si hay dos, entran las dos. La misma no se vuelve a registrar.</p>
+        </div>
+        <div class="juego">
+          <div class="panel">
+            <div class="escenario">
+              <video id="video" class="hidden" playsinline autoplay muted
+                aria-label="Vista previa de la cámara o del video"></video>
+              <img id="foto-preview" class="hidden" alt="Imagen seleccionada para clasificar">
+              <canvas id="canvas" width="400" height="400" class="hidden" aria-hidden="true"></canvas>
+              <div id="placeholder" class="espera">
+                <i class="bx bx-printer espera-icon" aria-hidden="true"></i>
+                <p>Tu foto aparecerá aquí</p>
+                <span>JPG, PNG, WEBP, MP4 o cámara en vivo</span>
+              </div>
+              <div id="camera-tag" class="chip hidden">Detectando</div>
+              <div id="conteo-vivo" class="hidden">En vista: <span id="en-vista">0</span> · En esta toma: <span
+                  id="en-toma">0</span></div>
+            </div>
+            <div class="teclas">
+              <button id="start-camera" type="button" class="tecla tecla-verde focus-ring"><i class="bx bx-camera"
+                  aria-hidden="true"></i>Cámara</button>
+              <label for="image-upload" class="tecla tecla-azul focus-ring"><i class="bx bx-image-add"
+                  aria-hidden="true"></i>Foto</label>
+              <input id="image-upload" class="sr-only" type="file" accept="image/*">
+              <label for="video-upload" class="tecla tecla-papel focus-ring"><i class="bx bx-video"
+                  aria-hidden="true"></i>Video</label>
+              <input id="video-upload" class="sr-only" type="file" accept="video/*">
+              <button id="switch-camera" type="button" class="tecla hidden focus-ring"
+                aria-label="Cambiar entre cámara frontal y trasera"><i class="bx bx-refresh"
+                  aria-hidden="true"></i>Cambiar cámara</button>
+              <button id="classify" type="button" disabled class="boton boton-jugar focus-ring"><i class="bx bx-scan"
+                  aria-hidden="true"></i>Registrar ahora</button>
+            </div>
+            <p id="status" role="status" aria-live="polite">Preparando el detector de impresoras…</p>
+            <button id="nueva-toma" type="button" class="tecla hidden focus-ring">Nueva toma</button>
+          </div>
+          <aside>
+            <section class="panel resultado" aria-labelledby="result-heading">
+              <p id="result-heading" class="etiqueta">Resultado</p>
+              <div id="result-icon" aria-hidden="true"><i class="bx bx-printer"></i></div>
+              <p id="result-label">Aún no lo sabemos</p>
+              <p id="result-confidence"></p>
+              <button id="speak-result" type="button" class="boton boton-chico hidden focus-ring"
+                aria-label="Escuchar el resultado"><i class="bx bx-volume-full" aria-hidden="true"></i>Escuchar</button>
+            </section>
+            <section class="panel privacidad" aria-labelledby="privacy-heading">
+              <h3 id="privacy-heading"><i class="bx bx-lock-alt" aria-hidden="true"></i> Tu privacidad importa</h3>
+              <p>Tus fotos no salen de tu dispositivo. Aquí solo se guarda el inventario: etiqueta, fecha, cantidad,
+                confianza y cajas.</p>
+            </section>
+          </aside>
+        </div>
+        <p class="nota">La IA puede equivocarse si la imagen está oscura, borrosa o las impresoras se tapan entre sí.
+        </p>
+      </div>
+    </section>
+
+    <section id="historial" class="ancho inventario">
+      <div class="cabecera-fila">
+        <div>
+          <p class="etiqueta">Registro</p>
+          <h2>Inventario</h2>
+          <p>Total: <span id="inventory-total">0</span> impresoras</p>
+        </div>
+        <div class="acciones">
+          <button id="export-json" type="button" class="boton boton-chico hidden focus-ring"><i class="bx bx-download"
+              aria-hidden="true"></i>JSON</button>
+          <button id="export-csv" type="button" class="boton boton-chico hidden focus-ring"><i class="bx bx-spreadsheet"
+              aria-hidden="true"></i>CSV</button>
+          <button id="clear-history" type="button" class="boton boton-chico boton-texto hidden focus-ring"><i
+              class="bx bx-trash" aria-hidden="true"></i>Borrar</button>
+        </div>
+      </div>
+      <p id="history-empty" class="vacio"><i class="bx bx-printer" aria-hidden="true"></i> Todavía no hay registros.
+        Cada impresora entra sola, una sola vez.</p>
+      <div class="tabla-cabecera" aria-hidden="true">
+        <span></span>
+        <span>Registro</span>
+        <span>Confianza</span>
+        <span>Cant.</span>
+        <span></span>
+      </div>
+      <ul id="history-list" class="tabla-botellas" aria-label="Inventario de impresoras"></ul>
+    </section>
+
+    <section id="mapa-basureros" class="ancho mapa-zona">
+      <p class="etiqueta">Cerca de ti</p>
+      <h2>Encuentra una tienda de impresoras</h2>
+      <p>Localiza puntos de venta y servicio técnico de impresoras cercanos a tu ubicación.</p>
+      <div class="buscar">
+        <button id="buscar-basureros" type="button" class="boton boton-azul focus-ring"><i
+            class="bx bx-current-location" aria-hidden="true"></i>Mi ubicación</button>
+        <input id="lugar-basureros" type="search" placeholder="Ciudad o dirección" aria-label="Ciudad o dirección">
+        <button id="buscar-lugar" type="button" class="boton boton-papel focus-ring"><i class="bx bx-search"
+            aria-hidden="true"></i>Buscar</button>
+      </div>
+      <p id="mapa-estado">Todavía no hay una búsqueda.</p>
+      <ul class="leyenda" aria-label="Tipos de punto">
+        <li><i class="bin bin-papel" aria-hidden="true"></i>Tienda</li>
+        <li><i class="bin bin-vidrio" aria-hidden="true"></i>Servicio técnico</li>
+        <li><i class="bin bin-plastico" aria-hidden="true"></i>Proveedor</li>
+      </ul>
+      <div id="mapa" role="region" aria-label="Mapa de tiendas de impresoras"></div>
+      <ul id="mapa-lista" aria-label="Lugares encontrados"></ul>
+    </section>
+
+    <section id="como-funciona" class="ancho pasos">
+      <p class="etiqueta">Cómo funciona</p>
+      <h2>Tres pasos y el inventario crece</h2>
+      <div class="pasos-grid">
+        <article class="paso"><i class="bx bx-camera" aria-hidden="true"></i>
+          <div>
+            <h3>1. Elige la toma</h3>
+            <p>Foto, cámara o video. El tablero es el mismo.</p>
+          </div>
+        </article>
+        <article class="paso"><i class="bx bx-scan" aria-hidden="true"></i>
+          <div>
+            <h3>2. La IA detecta</h3>
+            <p>Solo entra lo que el detector identifica como impresora. Los recuadros se dibujan encima.</p>
+          </div>
+        </article>
+        <article class="paso"><i class="bx bx-list-check" aria-hidden="true"></i>
+          <div>
+            <h3>3. Sumas al inventario</h3>
+            <p>Cada impresora queda una vez. Puedes corregir la cantidad o exportar.</p>
+          </div>
+        </article>
+      </div>
+      <div class="confianza-nota">
+        <h3>¿Qué significa la confianza?</h3>
+        <p>Es una estimación. Si queda por debajo del 60 %, el resultado se marca como poco seguro.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="pie safe-bottom">
+    <p><strong>PrinterScan IA</strong></p>
+    <p>Docente: Jesús Bautista · Alumno: Jair Torrico</p>
+    <p id="pwa-status">Puedes añadir PrinterScan IA a la pantalla de inicio desde el menú de tu navegador.</p>
+  </footer>
+
+  <div id="registro-modal" hidden role="status" aria-live="polite" aria-labelledby="modal-titulo">
+    <p class="etiqueta">Inventario</p>
+    <h3 id="modal-titulo">Impresoras registradas</h3>
+    <img id="modal-foto" alt="Encuadre con las impresoras marcadas" class="hidden">
+    <p id="modal-detalle"></p>
+    <button id="modal-cerrar" type="button" class="boton boton-papel focus-ring">Continuar</button>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/mapa.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+  <script>
+    (() => {
+      "use strict";
+
+      const TM_MODEL_URL = "https://teachablemachine.withgoogle.com/models/sdhCzEZdj/";
+      const SIZE = 480;
+      const INVENTORY_KEY = "printerscan-ia-inventario-v1";
+      const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
+      const UMBRAL_POCO_SEGURO = 0.6;
+      const UMBRAL_OBJETO = 0.65;
+      const elements = {
+        video: document.getElementById("video"),
+        canvas: document.getElementById("canvas"),
+        preview: document.getElementById("foto-preview"),
+        placeholder: document.getElementById("placeholder"),
+        cameraTag: document.getElementById("camera-tag"),
+        upload: document.getElementById("image-upload"),
+        videoUpload: document.getElementById("video-upload"),
+        startCamera: document.getElementById("start-camera"),
+        switchCamera: document.getElementById("switch-camera"),
+        classify: document.getElementById("classify"),
+        status: document.getElementById("status"),
+        resultIcon: document.getElementById("result-icon"),
+        resultLabel: document.getElementById("result-label"),
+        confidence: document.getElementById("result-confidence"),
+        speak: document.getElementById("speak-result"),
+        installApp: document.getElementById("install-app"),
+        pwaStatus: document.getElementById("pwa-status"),
+        historyList: document.getElementById("history-list"),
+        historyEmpty: document.getElementById("history-empty"),
+        clearHistory: document.getElementById("clear-history"),
+        exportJson: document.getElementById("export-json"),
+        exportCsv: document.getElementById("export-csv"),
+        inventoryTotal: document.getElementById("inventory-total"),
+        conteoVivo: document.getElementById("conteo-vivo"),
+        enVista: document.getElementById("en-vista"),
+        enToma: document.getElementById("en-toma"),
+        nuevaToma: document.getElementById("nueva-toma"),
+        modal: document.getElementById("registro-modal"),
+        modalTitulo: document.getElementById("modal-titulo"),
+        modalDetalle: document.getElementById("modal-detalle"),
+        modalFoto: document.getElementById("modal-foto"),
+        modalCerrar: document.getElementById("modal-cerrar")
+      };
+
+      let model = null;
+      let printerDetector = null;
+      let stream = null;
+      let facingMode = "environment";
+      let selectedImage = null;
+      let previewUrl = null;
+      let lastResult = null;
+      let busy = false;
+      let archivoVideo = false;
+      let installPrompt = null;
+      let rastros = [];
+      let cajasVisibles = [];
+      let tomadas = 0;
+      let detectando = false;
+      let conteoActivo = false;
+      let forzarSiguiente = false;
+      let ultimaFirma = "";
+      let cantidadModal = 0;
+      let buclePintura = 0;
+      let bucleDeteccion = 0;
+      const buffer = document.createElement("canvas");
+      buffer.width = SIZE;
+      buffer.height = SIZE;
+      const lienzo = document.getElementById("canvas");
+      if (lienzo) {
+        lienzo.width = SIZE;
+        lienzo.height = SIZE;
+      }
+
+      function setStatus(message, isError = false) {
+        elements.status.textContent = message;
+        elements.status.classList.toggle("estado-error", isError);
+      }
+
+      function resetResult() {
+        lastResult = null;
+        elements.resultIcon.innerHTML = '<i class="bx bx-printer"></i>';
+        elements.resultLabel.textContent = "Aún no lo sabemos";
+        elements.confidence.textContent = "";
+        elements.speak.classList.add("hidden");
+        elements.canvas.classList.add("hidden");
+      }
+
+      function cameraButton(detenida) {
+        elements.startCamera.innerHTML = detenida
+          ? '<i class="bx bx-camera mr-1 text-lg" aria-hidden="true"></i>Cámara'
+          : '<i class="bx bx-stop-circle mr-1 text-lg" aria-hidden="true"></i>Detener';
+      }
+
+      function rejectUnsupportedImage(personDetected) {
+        resetResult();
+        elements.resultIcon.innerHTML = `<i class="bx ${personDetected ? "bx-user" : "bx-search-alt-2"}"></i>`;
+        elements.resultLabel.textContent = personDetected ? "¡Foto fuera de rango!" : "No encontramos impresoras";
+        elements.confidence.textContent = personDetected
+          ? "Detectamos una persona, pero este sistema solo identifica equipos."
+          : "La imagen debe mostrar claramente al menos una impresora o equipo de oficina.";
+        setStatus(
+          personDetected
+            ? "Esta imagen muestra una persona. Prueba con una foto de impresoras."
+            : "No detectamos equipos compatibles. Acércate, mejora la luz o prueba otra foto.",
+          true
+        );
+      }
+
+      function stopCamera() {
+        pararConteo();
+        elements.conteoVivo.classList.add("hidden");
+        elements.nuevaToma.classList.add("hidden");
+        elements.canvas.classList.add("hidden");
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+          stream = null;
+        }
+        elements.video.pause();
+        elements.video.srcObject = null;
+        elements.video.classList.add("hidden");
+        elements.video.classList.remove("camera-mirror");
+        elements.cameraTag.classList.add("hidden");
+        elements.switchCamera.classList.add("hidden");
+        cameraButton(true);
+      }
+
+      async function openStream() {
+        const attempts = [
+          { audio: false, video: { facingMode: { ideal: facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+          { audio: false, video: { facingMode } },
+          { audio: false, video: true }
+        ];
+        let lastError = null;
+        for (const constraints of attempts) {
+          try {
+            return await navigator.mediaDevices.getUserMedia(constraints);
+          } catch (error) {
+            lastError = error;
+            if (error.name === "NotAllowedError" || error.name === "SecurityError") throw error;
+          }
+        }
+        throw lastError || new Error("No se pudo abrir la cámara.");
+      }
+
+      async function startCamera() {
+        if (!window.isSecureContext && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+          setStatus("Para usar la cámara, abre esta página con HTTPS. También puedes subir una foto.", true);
+          return;
+        }
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          setStatus("Este navegador no permite usar la cámara. Sube una foto para continuar.", true);
+          return;
+        }
+        stopCamera();
+        setStatus("Solicitando permiso para usar la cámara…");
+        try {
+          stream = await openStream();
+          elements.video.srcObject = stream;
+          archivoVideo = false;
+          await elements.video.play();
+          elements.video.classList.remove("hidden");
+          elements.video.classList.toggle("camera-mirror", facingMode === "user");
+          elements.preview.classList.add("hidden");
+          elements.canvas.classList.add("hidden");
+          elements.placeholder.classList.add("hidden");
+          elements.cameraTag.classList.remove("hidden");
+          elements.switchCamera.classList.remove("hidden");
+          cameraButton(false);
+          selectedImage = elements.video;
+          resetResult();
+          elements.classify.disabled = !printerDetector;
+          if (printerDetector) iniciarConteoCamara();
+          else setStatus("Cámara lista. En cuanto cargue el detector, escanea sola.");
+        } catch (error) {
+          console.error("No se pudo iniciar la cámara:", error);
+          const messages = {
+            NotAllowedError: "No hay permiso para la cámara. Autoriza el acceso o sube una foto.",
+            NotFoundError: "No encontramos una cámara disponible. Puedes subir una foto.",
+            NotReadableError: "Could not start video source: la cámara está ocupada. Cierra Flask, Zoom u otra app que la use, o sube una foto.",
+            TrackStartError: "Could not start video source: la cámara está ocupada. Ciérrala en otras aplicaciones o sube una foto.",
+            OverconstrainedError: "La cámara no admite la configuración solicitada. Prueba con otra cámara."
+          };
+          setStatus(messages[error.name] || "No se pudo iniciar la cámara. Comprueba los permisos o sube una foto.", true);
+          stopCamera();
+        }
+      }
+
+      async function showSelectedPhoto(file) {
+        if (!file) return;
+        if (file.size > MAX_IMAGE_BYTES) {
+          setStatus("La imagen supera el límite permitido. Elige un archivo más liviano.", true);
+          elements.upload.value = "";
+          return;
+        }
+
+        let archivoProcesado = file;
+        const nombre = file.name ? file.name.toLowerCase() : "";
+
+        // Conversión automática de fotos HEIC/HEIF de iPhone
+        if (nombre.endsWith(".heic") || nombre.endsWith(".heif") || file.type === "image/heic") {
+          if (window.heic2any) {
+            try {
+              setStatus("Procesando imagen de iPhone...");
+              const convertido = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.85 });
+              archivoProcesado = Array.isArray(convertido) ? convertido[0] : convertido;
+            } catch (err) {
+              console.warn("No se pudo convertir HEIC:", err);
+            }
+          }
+        }
+
+        const url = URL.createObjectURL(archivoProcesado);
+        const image = new Image();
+        image.onload = () => {
+          if (!image.naturalWidth || !image.naturalHeight) {
+            URL.revokeObjectURL(url);
+            setStatus("No pudimos leer esa imagen. Prueba con otro archivo.", true);
+            return;
+          }
+          stopCamera();
+          archivoVideo = false;
+          if (previewUrl) URL.revokeObjectURL(previewUrl);
+          previewUrl = url;
+          selectedImage = image;
+          resetResult();
+          elements.preview.src = url;
+          elements.preview.classList.remove("hidden");
+          elements.placeholder.classList.add("hidden");
+          elements.classify.disabled = !printerDetector;
+          if (printerDetector) {
+            clasificarActual().catch((error) => setStatus(error.message || "No se pudo registrar la foto.", true));
+          } else {
+            setStatus("Foto lista. Se registrará sola en cuanto cargue el detector.");
+          }
+        };
+        image.onerror = () => {
+          URL.revokeObjectURL(url);
+          setStatus("No pudimos abrir esa imagen. Comprueba el formato de tu foto.", true);
+        };
+        image.src = url;
+      }
+
+      function esperarVideo(nombre, limiteMs = 8000) {
+        return new Promise((resolve, reject) => {
+          if (nombre === "loadeddata" && elements.video.readyState >= 2 && elements.video.videoWidth) {
+            resolve();
+            return;
+          }
+          let timer = 0;
+          const limpiar = () => {
+            clearTimeout(timer);
+            elements.video.removeEventListener(nombre, listo);
+            elements.video.removeEventListener("error", fallo);
+          };
+          const listo = () => {
+            limpiar();
+            resolve();
+          };
+          const fallo = () => {
+            limpiar();
+            reject(new Error("No se pudo leer el video. Prueba con un MP4."));
+          };
+          timer = setTimeout(() => {
+            limpiar();
+            if (elements.video.videoWidth) resolve();
+            else reject(new Error("No se pudo leer el video. Prueba con un MP4."));
+          }, limiteMs);
+          elements.video.addEventListener(nombre, listo, { once: true });
+          elements.video.addEventListener("error", fallo, { once: true });
+        });
+      }
+
+      async function irATiempo(tiempo) {
+        const video = elements.video;
+        if (!Number.isFinite(video.duration)) return;
+        const destino = Math.min(Math.max(0, tiempo), Math.max(0, video.duration - 0.05));
+        if (Math.abs(video.currentTime - destino) < 0.08) return;
+        video.currentTime = destino;
+        await esperarVideo("seeked");
+      }
+
+      async function showSelectedVideo(file) {
+        if (!file) return;
+        if (file.size > 80 * 1024 * 1024) {
+          setStatus("Ese video pesa demasiado para contarlo aquí. Prueba con un clip más corto.", true);
+          return;
+        }
+        stopCamera();
+        resetResult();
+        archivoVideo = true;
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        previewUrl = URL.createObjectURL(file);
+        elements.video.srcObject = null;
+        elements.video.src = previewUrl;
+        elements.video.muted = true;
+        await esperarVideo("loadeddata", 4000);
+        const medio = Number.isFinite(elements.video.duration) ? elements.video.duration / 2 : 0;
+        await irATiempo(medio);
+        elements.video.pause();
+        selectedImage = elements.video;
+        elements.video.classList.remove("hidden", "camera-mirror");
+        elements.preview.classList.add("hidden");
+        elements.canvas.classList.add("hidden");
+        elements.placeholder.classList.add("hidden");
+        elements.classify.disabled = !printerDetector;
+        if (printerDetector) {
+          await contarVideo();
+        } else {
+          setStatus("Video listo. Se contará solo cuando cargue el detector.");
+        }
+      }
+
+      function interseccion(a, b) {
+        const x1 = Math.max(a.x, b.x);
+        const y1 = Math.max(a.y, b.y);
+        const x2 = Math.min(a.x + a.w, b.x + b.w);
+        const y2 = Math.min(a.y + a.h, b.y + b.h);
+        const inter = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
+        const union = a.w * a.h + b.w * b.h - inter;
+        return union <= 0 ? 0 : inter / union;
+      }
+
+      function solapan(a, b) {
+        const dx = (a.x + a.w / 2) - (b.x + b.w / 2);
+        const dy = (a.y + a.h / 2) - (b.y + b.h / 2);
+        const limite = Math.max(a.w, a.h, b.w, b.h) * 0.65;
+        return interseccion(a, b) >= 0.2 || Math.hypot(dx, dy) < limite;
+      }
+
+      function juntarCajas(cajas) {
+        const orden = [...cajas].sort((a, b) => b.score - a.score);
+        const quedan = [];
+        for (const caja of orden) {
+          if (caja.w < 16 || caja.h < 20) continue;
+          if (quedan.every((otra) => interseccion(caja, otra) < 0.45)) quedan.push(caja);
+        }
+        return quedan;
+      }
+
+      function firmaDe(cajas) {
+        return cajas
+          .map((caja) => [Math.round(caja.x / 16), Math.round(caja.y / 16), Math.round(caja.w / 16), Math.round(caja.h / 16)].join("x"))
+          .sort()
+          .join("|");
+      }
+
+      function reiniciarRastros() {
+        rastros = [];
+        cajasVisibles = [];
+        tomadas = 0;
+        cantidadModal = 0;
+        actualizarChip(0);
+      }
+
+      function pararConteo() {
+        conteoActivo = false;
+        if (buclePintura) cancelAnimationFrame(buclePintura);
+        buclePintura = 0;
+        if (bucleDeteccion) clearTimeout(bucleDeteccion);
+        bucleDeteccion = 0;
+      }
+
+      function actualizarChip(enVista) {
+        elements.enVista.textContent = String(enVista);
+        elements.enToma.textContent = String(tomadas);
+      }
+
+      function dibujarEnCanvas(canvas, source, cajas) {
+        const anchoReal = source.videoWidth || source.naturalWidth || source.width || SIZE;
+        const altoReal = source.videoHeight || source.naturalHeight || source.height || SIZE;
+        const escala = Math.min(1, 960 / Math.max(anchoReal, altoReal));
+        const ancho = Math.max(1, Math.round(anchoReal * escala));
+        const alto = Math.max(1, Math.round(altoReal * escala));
+        if (canvas.width !== ancho) canvas.width = ancho;
+        if (canvas.height !== alto) canvas.height = alto;
+        const context = canvas.getContext("2d", { willReadFrequently: true });
+        context.setTransform(1, 0, 0, 1, 0, 0);
+        context.fillStyle = "#0f172a";
+        context.fillRect(0, 0, ancho, alto);
+        context.save();
+        if (source === elements.video && stream && facingMode === "user") {
+          context.translate(ancho, 0);
+          context.scale(-1, 1);
+        }
+        context.drawImage(source, 0, 0, ancho, alto);
+        context.restore();
+        context.lineWidth = 3;
+        context.font = "700 16px Inter, sans-serif";
+        context.textBaseline = "top";
+        for (const caja of cajas) {
+          context.strokeStyle = caja.registrada ? "#f59e0b" : "#38bdf8";
+          context.strokeRect(caja.x, caja.y, caja.w, caja.h);
+          const texto = caja.registrada ? "ya registrada" : `impresora ${Math.round(caja.score * 100)}%`;
+          const medida = context.measureText(texto).width;
+          const y = caja.y > 26 ? caja.y - 26 : caja.y;
+          context.fillStyle = caja.registrada ? "#f59e0b" : "#38bdf8";
+          context.fillRect(caja.x, y, medida + 12, 24);
+          context.fillStyle = "#0f172a";
+          context.fillText(texto, caja.x + 6, y + 3);
+        }
+      }
+
+      function cajasDesdeRastros() {
+        return rastros
+          .filter((rastro) => rastro.missed === 0)
+          .map((rastro) => ({
+            x: rastro.x,
+            y: rastro.y,
+            w: rastro.w,
+            h: rastro.h,
+            score: rastro.score,
+            registrada: rastro.registrado
+          }));
+      }
+
+      function actualizarRastros(cajas, video) {
+        const usadas = new Set();
+        for (const rastro of rastros) {
+          let mejor = -1;
+          cajas.forEach((caja, indice) => {
+            if (usadas.has(indice) || !solapan(rastro, caja)) return;
+            mejor = indice;
+          });
+          if (mejor >= 0) {
+            usadas.add(mejor);
+            const caja = cajas[mejor];
+            rastro.x = caja.x;
+            rastro.y = caja.y;
+            rastro.w = caja.w;
+            rastro.h = caja.h;
+            rastro.score = caja.score;
+            rastro.hits += 1;
+            rastro.missed = 0;
+          } else {
+            rastro.missed += 1;
+          }
+        }
+        cajas.forEach((caja, indice) => {
+          if (usadas.has(indice)) return;
+          if (!forzarSiguiente) {
+            const repetida = rastros.some((rastro) => rastro.registrado && solapan(rastro, caja));
+            if (repetida) return;
+          }
+          rastros.push({
+            id: createId(),
+            x: caja.x,
+            y: caja.y,
+            w: caja.w,
+            h: caja.h,
+            score: caja.score,
+            hits: 1,
+            missed: 0,
+            registrado: false,
+            rechazado: false
+          });
+        });
+        rastros = rastros.filter((rastro) => rastro.registrado || rastro.missed < 8);
+        const hitsMinimos = 1;
+        forzarSiguiente = false;
+        const nuevas = [];
+        for (const rastro of rastros) {
+          if (!rastro.registrado && !rastro.rechazado && rastro.hits >= hitsMinimos && rastro.missed === 0) {
+            rastro.registrado = true;
+            nuevas.push(rastro);
+          }
+        }
+        return nuevas;
+      }
+
+      function mostrarResultado(cantidad, confianza) {
+        lastResult = { etiqueta: "Impresora", confidence: confianza, cantidad };
+        elements.resultIcon.innerHTML = '<i class="bx bx-printer"></i>';
+        elements.resultLabel.textContent = cantidad === 1 ? "1 impresora en el inventario" : `${cantidad} impresoras en el inventario`;
+        const porcentaje = Math.round(confianza * 100);
+        elements.confidence.textContent = `${cantidad} ${cantidad === 1 ? "nueva" : "nuevas"} · ${porcentaje}%${confianza < UMBRAL_POCO_SEGURO ? " · poco seguro" : ""}`;
+        elements.speak.classList.remove("hidden");
+      }
+
+      function abrirModal(cantidad, detalle) {
+        if (cantidad > 0 && !elements.modal.hidden) cantidadModal += cantidad;
+        else cantidadModal = cantidad;
+        const total = cantidadModal;
+        elements.modalTitulo.textContent = total === 0
+          ? "Esas impresoras ya estaban"
+          : total === 1 ? "1 impresora registrada" : `${total} impresoras registradas`;
+        elements.modalDetalle.textContent = detalle;
+        try {
+          elements.modalFoto.src = elements.canvas.toDataURL("image/jpeg", 0.72);
+          elements.modalFoto.classList.remove("hidden");
+        } catch (error) {
+          elements.modalFoto.classList.add("hidden");
+        }
+        elements.modal.hidden = false;
+      }
+
+      function cerrarModal() {
+        elements.modal.hidden = true;
+        cantidadModal = 0;
+      }
+
+      function registrarNuevas(nuevas, silencio) {
+        const records = nuevas.map((rastro) => ({
+          id: rastro.id,
+          fecha: new Date().toISOString(),
+          cantidad: 1,
+          confianzaPromedio: Math.round(rastro.score * 10000) / 10000,
+          bboxes: [{
+            x: Math.round(rastro.x),
+            y: Math.round(rastro.y),
+            width: Math.round(rastro.w),
+            height: Math.round(rastro.h),
+            score: Math.round(rastro.score * 10000) / 10000
+          }],
+          etiqueta: "Impresora"
+        }));
+        writeInventory([...records, ...readInventory()]);
+        renderHistory();
+        tomadas += records.length;
+        actualizarChip(cajasVisibles.length);
+        const confianza = records.reduce((suma, item) => suma + item.confianzaPromedio, 0) / records.length;
+        mostrarResultado(records.length, confianza);
+        const detalle = records.length === 1
+          ? "Quedó guardada en este dispositivo. Si sigue en cámara, no se vuelve a contar."
+          : "Cada una es un registro. Si siguen a la vista, no se duplican.";
+        if (!silencio) abrirModal(records.length, detalle);
+        setStatus(records.length === 1 ? "1 impresora nueva en el inventario." : `${records.length} impresoras nuevas en el inventario.`);
+      }
+
+      async function puntajeRecorte(source, caja) {
+        if (!model || !window.tf) return 1;
+        let input;
+        let output;
+        try {
+          input = tf.tidy(() => {
+            const scaled = document.createElement("canvas");
+            scaled.width = 100;
+            scaled.height = 100;
+            const ctx = scaled.getContext("2d", { willReadFrequently: true });
+            ctx.drawImage(
+              source,
+              Math.max(0, caja.x),
+              Math.max(0, caja.y),
+              Math.max(1, caja.w),
+              Math.max(1, caja.h),
+              0,
+              0,
+              100,
+              100
+            );
+            const rgba = ctx.getImageData(0, 0, 100, 100).data;
+            const grayscale = new Float32Array(10000);
+            for (let pixel = 0; pixel < grayscale.length; pixel += 1) {
+              const offset = pixel * 4;
+              grayscale[pixel] = (0.114 * rgba[offset] + 0.587 * rgba[offset + 1] + 0.299 * rgba[offset + 2]) / 255;
+            }
+            return tf.tensor4d(grayscale, [1, 100, 100, 1]);
+          });
+          output = model.predict(input);
+          const prediction = await output.data();
+          return Number.isFinite(prediction[0]) ? prediction[0] : 1;
+        } catch (error) {
+          console.warn("No se pudo confirmar el recorte:", error);
+          return 1;
+        } finally {
+          if (input) input.dispose();
+          if (output && typeof output.dispose === "function") output.dispose();
+        }
+      }
+
+      async function confirmarCajas(source, cajas) {
+        if (!model || !cajas.length) return cajas;
+        const aceptadas = [];
+        for (const caja of cajas) {
+          const puntaje = await puntajeRecorte(source, caja);
+          if (puntaje >= 0.28 || caja.score >= 0.45) {
+            aceptadas.push({ ...caja, score: Math.max(caja.score, puntaje) });
+          }
+        }
+        return aceptadas;
+      }
+
+      async function leerImpresoras(source) {
+        if (!printerDetector) return { cajas: [], persona: false, score: 0 };
+        let predicciones = [];
+        try {
+          predicciones = await printerDetector.predict(source);
+        } catch (e) {
+          console.warn("Fallo al predecir con Teachable Machine:", e);
+          return { cajas: [], persona: false, score: 0 };
+        }
+
+        // Identificar la probabilidad de la clase Impresora (Class 1)
+        let probImpresora = 0;
+        for (const pred of predicciones) {
+          const nombre = pred.className.toLowerCase().trim();
+          const esClaseImpresora = pred.className === "Class 1" ||
+            (nombre.includes("impresora") && !nombre.includes("no"));
+          if (esClaseImpresora) {
+            probImpresora = Math.max(probImpresora, pred.probability);
+          }
+        }
+
+        // Solo se considera impresora si supera el 60% de certeza
+        const esImpresora = probImpresora >= UMBRAL_OBJETO;
+        const cajas = [];
+
+        if (esImpresora) {
+          const anchoReal = source.videoWidth || source.naturalWidth || source.width || SIZE;
+          const altoReal = source.videoHeight || source.naturalHeight || source.height || SIZE;
+          const escala = Math.min(1, 960 / Math.max(anchoReal, altoReal));
+          const ancho = Math.max(1, Math.round(anchoReal * escala));
+          const alto = Math.max(1, Math.round(altoReal * escala));
+          const padX = Math.round(ancho * 0.12);
+          const padY = Math.round(alto * 0.12);
+
+          cajas.push({
+            x: padX,
+            y: padY,
+            w: ancho - (padX * 2),
+            h: alto - (padY * 2),
+            score: probImpresora
+          });
+        }
+
+        return { cajas, persona: false, score: probImpresora, predicciones };
+      }
+
+      async function detectarYRegistrar(source, opciones) {
+        if (!printerDetector || detectando) return;
+        detectando = true;
+        try {
+          const leidas = await leerImpresoras(source);
+          const cajas = leidas.cajas;
+          const persona = leidas.persona;
+          if (opciones.foto) {
+            await registrarFoto(cajas, persona, source);
+            return;
+          }
+          const nuevas = actualizarRastros(cajas, Boolean(opciones.video));
+          cajasVisibles = cajasDesdeRastros();
+          actualizarChip(cajasVisibles.length);
+
+          if (cajas.length > 0) {
+            setStatus(`¡Impresora en vista! (${Math.round(leidas.score * 100)} % confianza)`);
+          } else {
+            setStatus("Enfocando… buscando impresoras.");
+          }
+
+          if (!nuevas.length) {
+            return;
+          }
+          registrarNuevas(nuevas, Boolean(opciones.silencio));
+        } catch (error) {
+          console.error("No se pudo contar:", error);
+          setStatus(error.message || "No se pudo contar las impresoras.", true);
+        } finally {
+          detectando = false;
+        }
+      }
+
+      async function registrarFoto(cajas, persona, source) {
+        elements.preview.classList.add("hidden");
+        elements.video.classList.add("hidden");
+        elements.placeholder.classList.add("hidden");
+        elements.canvas.classList.remove("hidden");
+        cajasVisibles = cajas.map((caja) => ({ ...caja, registrada: false }));
+        dibujarEnCanvas(elements.canvas, source, cajasVisibles);
+        if (!cajas.length) {
+          rejectUnsupportedImage(persona);
+          return;
+        }
+        const nuevas = cajas.map((caja) => ({
+          id: createId(),
+          x: caja.x,
+          y: caja.y,
+          w: caja.w,
+          h: caja.h,
+          score: caja.score
+        }));
+        registrarNuevas(nuevas, false);
+        cajasVisibles = cajas.map((caja) => ({ ...caja, registrada: true }));
+        dibujarEnCanvas(elements.canvas, source, cajasVisibles);
+      }
+
+      function pintarCamara() {
+        if (!conteoActivo || !stream) return;
+        if (elements.video.videoWidth) {
+          dibujarEnCanvas(elements.canvas, elements.video, cajasVisibles);
+          elements.canvas.classList.remove("hidden");
+          elements.video.classList.add("hidden");
+          elements.preview.classList.add("hidden");
+          elements.placeholder.classList.add("hidden");
+        }
+        buclePintura = requestAnimationFrame(pintarCamara);
+      }
+
+      function iniciarConteoCamara() {
+        if (!printerDetector || !stream) return;
+        pararConteo();
+        reiniciarRastros();
+        conteoActivo = true;
+        elements.conteoVivo.classList.remove("hidden");
+        elements.nuevaToma.classList.remove("hidden");
+        elements.canvas.classList.remove("hidden");
+        pintarCamara();
+        const ciclo = async () => {
+          if (!conteoActivo || !stream) return;
+          await detectarYRegistrar(elements.video, { aviso: true });
+          if (conteoActivo && stream) bucleDeteccion = setTimeout(ciclo, 250);
+        };
+        bucleDeteccion = setTimeout(ciclo, 250);
+        setStatus("Detectando en vivo con tu modelo de Teachable Machine.");
+      }
+
+      async function contarVideo() {
+        if (!printerDetector || !archivoVideo) return;
+        pararConteo();
+        reiniciarRastros();
+        conteoActivo = true;
+        elements.conteoVivo.classList.remove("hidden");
+        elements.nuevaToma.classList.add("hidden");
+        elements.canvas.classList.remove("hidden");
+        elements.preview.classList.add("hidden");
+        elements.placeholder.classList.add("hidden");
+        const duracion = elements.video.duration;
+        if (!Number.isFinite(duracion) || duracion <= 0) {
+          conteoActivo = false;
+          setStatus("Ese video no tiene duración. Prueba con otro archivo.", true);
+          return;
+        }
+        const paso = Math.min(0.45, Math.max(0.25, duracion / 20));
+        elements.video.pause();
+        for (let tiempo = 0; tiempo < duracion - 0.05 && conteoActivo; tiempo += paso) {
+          await irATiempo(tiempo);
+          await detectarYRegistrar(elements.video, { video: true, silencio: true });
+          dibujarEnCanvas(elements.canvas, elements.video, cajasVisibles);
+          elements.video.classList.add("hidden");
+          elements.canvas.classList.remove("hidden");
+          setStatus(`Video ${Math.min(100, Math.round((tiempo / duracion) * 100))} %. Impresoras nuevas: ${tomadas}.`);
+        }
+        conteoActivo = false;
+        if (tomadas === 0) {
+          setStatus("En ese video no se confirmó ninguna impresora.", true);
+          abrirModal(0, "No se registró nada. Solo entra lo que el detector identifica como equipo de oficina.");
+        } else {
+          abrirModal(tomadas, "Cada impresora del video quedó una sola vez. Si la misma sale en varios segundos, no se duplica.");
+        }
+      }
+
+      async function clasificarActual() {
+        if (!printerDetector || !selectedImage) return;
+        if (archivoVideo && !stream) {
+          await contarVideo();
+          return;
+        }
+        if (stream) {
+          forzarSiguiente = true;
+          await detectarYRegistrar(elements.video, { aviso: true });
+          return;
+        }
+        await detectarYRegistrar(selectedImage, { foto: true, aviso: true });
+      }
+
+      function readInventory() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(INVENTORY_KEY) || "[]");
+          if (!Array.isArray(saved)) return [];
+          return saved.filter((item) =>
+            item && typeof item.id === "string" && typeof item.fecha === "string" &&
+            typeof item.etiqueta === "string" && Number.isFinite(item.cantidad) &&
+            Number.isFinite(item.confianzaPromedio) && Array.isArray(item.bboxes)
+          );
+        } catch (error) {
+          console.warn("No se pudo leer el inventario local:", error);
+          return [];
+        }
+      }
+
+      function writeInventory(entries) {
+        localStorage.setItem(INVENTORY_KEY, JSON.stringify(entries));
+      }
+
+      function renderHistory() {
+        const entries = readInventory();
+        const total = entries.reduce((sum, item) => sum + item.cantidad, 0);
+        elements.inventoryTotal.textContent = String(total);
+        const marcador = document.getElementById("marcador-total");
+        if (marcador) marcador.textContent = String(total);
+        elements.historyList.replaceChildren();
+        const empty = entries.length === 0;
+        elements.historyEmpty.classList.toggle("hidden", !empty);
+        elements.clearHistory.classList.toggle("hidden", empty);
+        elements.exportJson.classList.toggle("hidden", empty);
+        elements.exportCsv.classList.toggle("hidden", empty);
+        for (const item of entries) {
+          const row = document.createElement("li");
+          row.className = "fila";
+          row.dataset.id = item.id;
+          const ficha = document.createElement("span");
+          ficha.className = "ficha";
+          ficha.setAttribute("aria-hidden", "true");
+          ficha.innerHTML = '<i class="bx bx-printer"></i>';
+
+          const description = document.createElement("div");
+          const title = document.createElement("strong");
+          title.textContent = item.etiqueta;
+          const date = document.createElement("small");
+          const cuando = new Date(item.fecha);
+          date.textContent = Number.isNaN(cuando.getTime())
+            ? item.fecha
+            : cuando.toLocaleString("es", { dateStyle: "short", timeStyle: "short" });
+          description.append(title, date);
+          const certainty = document.createElement("span");
+          certainty.className = "porcentaje";
+          const porcentaje = Math.round(item.confianzaPromedio * 100);
+          certainty.append(document.createTextNode(`${porcentaje}%`));
+          if (porcentaje < 60) {
+            const aviso = document.createElement("i");
+            aviso.className = "bx bx-error-circle";
+            aviso.title = "Poco seguro";
+            aviso.setAttribute("aria-label", "Poco seguro");
+            certainty.append(aviso);
+          }
+          const input = document.createElement("input");
+          input.type = "number";
+          input.min = "0";
+          input.step = "1";
+          input.value = String(item.cantidad);
+          input.dataset.cantidad = "1";
+          input.setAttribute("aria-label", `Cantidad del registro ${item.fecha}`);
+          const remove = document.createElement("button");
+          remove.type = "button";
+          remove.dataset.accion = "eliminar";
+          remove.setAttribute("aria-label", "Borrar registro");
+          remove.innerHTML = '<i class="bx bx-trash" aria-hidden="true"></i>';
+          row.append(ficha, description, certainty, input, remove);
+          elements.historyList.append(row);
+        }
+      }
+
+      function createId() {
+        if (crypto.randomUUID) return crypto.randomUUID();
+        return `impresora-${Date.now()}`;
+      }
+
+      async function classify() {
+        if (!bottleDetector || !selectedImage || busy) return;
+        busy = true;
+        elements.classify.disabled = true;
+        elements.classify.innerHTML = '<i class="bx bx-loader-alt bx-spin" aria-hidden="true"></i>Detectando…';
+        try {
+          await clasificarActual();
+        } catch (error) {
+          console.error("No se pudo registrar:", error);
+          setStatus(error.message || "No se pudo registrar las impresoras.", true);
+        } finally {
+          busy = false;
+          elements.classify.disabled = !printerDetector || !selectedImage;
+          elements.classify.innerHTML = '<i class="bx bx-scan" aria-hidden="true"></i>Registrar ahora';
+        }
+      }
+
+      async function loadModel() {
+        try {
+          if (!window.tmImage) throw new Error("No se pudo cargar la librería de Teachable Machine. Comprueba tu conexión e inténtalo de nuevo.");
+          setStatus("Cargando tu modelo de Teachable Machine...");
+          const modelURL = TM_MODEL_URL + "model.json";
+          const metadataURL = TM_MODEL_URL + "metadata.json";
+          printerDetector = await tmImage.load(modelURL, metadataURL);
+          elements.classify.disabled = !selectedImage;
+          if (stream) iniciarConteoCamara();
+          else if (archivoVideo && selectedImage) await contarVideo();
+          else if (previewUrl && selectedImage) await clasificarActual();
+          else setStatus("Listo. Modelo de Teachable Machine conectado. Apunta la cámara o sube una foto.");
+        } catch (error) {
+          console.error("No se pudo cargar el modelo:", error);
+          setStatus("No se pudo cargar el modelo de IA. Revisa tu conexión a internet.", true);
+        }
+      }
+
+      function download(name, content, type) {
+        const blob = new Blob([content], { type });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = name;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function csvField(value) {
+        const text = String(value ?? "");
+        return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+      }
+
+      elements.startCamera.addEventListener("click", () => {
+        if (stream) {
+          stopCamera();
+          selectedImage = null;
+          elements.placeholder.classList.remove("hidden");
+          elements.classify.disabled = true;
+          setStatus(printerDetector ? "Cámara detenida. Elige una foto o activa la cámara." : "Cámara detenida. Esperando a que cargue el detector.");
+        } else {
+          startCamera();
+        }
+      });
+      elements.switchCamera.addEventListener("click", () => {
+        facingMode = facingMode === "user" ? "environment" : "user";
+        startCamera();
+      });
+      elements.upload.addEventListener("change", (event) => showSelectedPhoto(event.target.files[0]));
+      elements.videoUpload.addEventListener("change", (event) => {
+        showSelectedVideo(event.target.files[0]).catch((error) => {
+          setStatus(error.message || "No se pudo abrir ese video.", true);
+        });
+      });
+      if (elements.preview.getAttribute("src") && elements.preview.complete && elements.preview.naturalWidth) {
+        selectedImage = elements.preview;
+        elements.placeholder.classList.add("hidden");
+      } else if (elements.preview.getAttribute("src")) {
+        elements.preview.addEventListener("load", () => {
+          selectedImage = elements.preview;
+          elements.placeholder.classList.add("hidden");
+          elements.classify.disabled = !printerDetector;
+        });
+      }
+      elements.classify.addEventListener("click", classify);
+      elements.nuevaToma.addEventListener("click", () => {
+        reiniciarRastros();
+        ultimaFirma = "";
+        setStatus("Toma nueva. Las impresoras de ahora se pueden registrar otra vez.");
+      });
+      elements.modalCerrar.addEventListener("click", cerrarModal);
+      elements.modal.addEventListener("click", (event) => {
+        if (event.target === elements.modal) cerrarModal();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !elements.modal.hidden) cerrarModal();
+      });
+      elements.speak.addEventListener("click", () => {
+        if (!lastResult || !("speechSynthesis" in window)) {
+          setStatus("La lectura en voz alta no está disponible en este navegador.", true);
+          return;
+        }
+        window.speechSynthesis.cancel();
+        const porcentaje = Math.round(lastResult.confidence * 100);
+        const poco = lastResult.confidence < UMBRAL_POCO_SEGURO ? " El resultado es poco seguro." : "";
+        const utterance = new SpeechSynthesisUtterance(
+          `Se contaron ${lastResult.cantidad} impresoras. La inteligencia artificial detectó el equipo con una confianza del ${porcentaje} por ciento.${poco}`
+        );
+        utterance.lang = "es";
+        window.speechSynthesis.speak(utterance);
+      });
+      if (!("speechSynthesis" in window)) elements.speak.classList.add("hidden");
+      elements.historyList.addEventListener("change", (event) => {
+        const input = event.target;
+        if (!(input instanceof HTMLInputElement) || !input.dataset.cantidad) return;
+        const row = input.closest("[data-id]");
+        if (!row) return;
+        const cantidad = Number(input.value);
+        if (!Number.isFinite(cantidad) || cantidad < 0) {
+          setStatus("La cantidad debe ser un número mayor o igual a 0.", true);
+          renderHistory();
+          return;
+        }
+        const entries = readInventory();
+        const item = entries.find((entry) => entry.id === row.dataset.id);
+        if (!item) return;
+        item.cantidad = Math.round(cantidad);
+        writeInventory(entries);
+        renderHistory();
+        setStatus("Cantidad actualizada en este dispositivo.");
+      });
+      elements.historyList.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-accion='eliminar']");
+        if (!button) return;
+        const row = button.closest("[data-id]");
+        if (!row || !window.confirm("¿Borrar este registro del inventario?")) return;
+        writeInventory(readInventory().filter((entry) => entry.id !== row.dataset.id));
+        renderHistory();
+        setStatus("Registro borrado de este dispositivo.");
+      });
+      elements.clearHistory.addEventListener("click", () => {
+        try {
+          localStorage.removeItem(INVENTORY_KEY);
+          renderHistory();
+          setStatus("Inventario borrado de este dispositivo.");
+        } catch (error) {
+          console.error("No se pudo borrar el inventario:", error);
+          setStatus("No se pudo borrar el inventario. Revisa los permisos del navegador.", true);
+        }
+      });
+      elements.exportJson.addEventListener("click", () => {
+        download("printerscan-ia.json", JSON.stringify(readInventory(), null, 2), "application/json;charset=utf-8");
+      });
+      elements.exportCsv.addEventListener("click", () => {
+        const rows = readInventory().map((item) =>
+          [item.id, item.fecha, item.cantidad, item.confianzaPromedio, item.etiqueta, JSON.stringify(item.bboxes)]
+            .map(csvField).join(",")
+        );
+        download(
+          "printerscan-ia.csv",
+          `\uFEFFid,fecha,cantidad,confianzaPromedio,etiqueta,bboxes\r\n${rows.join("\r\n")}`,
+          "text/csv;charset=utf-8"
+        );
+      });
+      window.addEventListener("beforeinstallprompt", (event) => {
+        event.preventDefault();
+        installPrompt = event;
+        elements.installApp.classList.remove("hidden");
+        elements.installApp.classList.add("inline-flex");
+      });
+      elements.installApp.addEventListener("click", async () => {
+        if (!installPrompt) return;
+        try {
+          await installPrompt.prompt();
+          await installPrompt.userChoice;
+          installPrompt = null;
+          elements.installApp.classList.add("hidden");
+          elements.installApp.classList.remove("inline-flex");
+        } catch (error) {
+          console.error("No se pudo iniciar la instalación:", error);
+          elements.pwaStatus.textContent = "No se pudo abrir la instalación. Usa el menú de tu navegador para añadir la app.";
+        }
+      });
+      window.addEventListener("appinstalled", () => {
+        installPrompt = null;
+        elements.installApp.classList.add("hidden");
+        elements.installApp.classList.remove("inline-flex");
+        elements.pwaStatus.textContent = "PrinterScan IA ya está instalada en este dispositivo.";
+      });
+      if ("serviceWorker" in navigator && location.protocol !== "file:") {
+        navigator.serviceWorker.register("./service-worker.js")
+          .then(() => {
+            elements.pwaStatus.textContent = "App instalable · tras la primera carga, los recursos se guardan para usarla sin conexión.";
+          })
+          .catch((error) => {
+            console.error("No se pudo registrar el modo PWA:", error);
+            elements.pwaStatus.textContent = "La instalación no está disponible ahora; puedes seguir usando la app en línea.";
+          });
+      }
+      window.addEventListener("pagehide", stopCamera);
+      renderHistory();
+      loadModel();
+    })();
+  </script>
+</body>
+
+</html>
